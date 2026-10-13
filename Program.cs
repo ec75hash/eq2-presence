@@ -177,11 +177,10 @@ internal static class Program
 
                 if (chosen != null && !string.Equals(chosen, active, StringComparison.OrdinalIgnoreCase))
                 {
+                    string? zone = ReadLogTail(chosen, ref position, carry);
                     active = chosen;
-                    position = lastSize[active];
-                    carry.Clear();
                     (current.Server, current.Character) = ServerAndCharacter(active);
-                    current.Zone = LastZoneIn(active);
+                    current.Zone = zone;
                     current.ZoneSince = DateTime.UtcNow;
                     string fileName = Path.GetFileName(active);
                     Console.WriteLine($"{Clock()} following {current.Character} on {current.Server} ({fileName})");
@@ -194,9 +193,10 @@ internal static class Program
                     long size = lastSize[active];
                     if (size < position)
                     {
-                        // The file shrank (deleted and recreated, or truncated). Start over from its end.
-                        position = size;
-                        carry.Clear();
+                        // Re-read replacement content and retain its unfinished line, just as at startup.
+                        current.Zone = ReadLogTail(active, ref position, carry);
+                        current.ZoneSince = DateTime.UtcNow;
+                        Push(discord, current);
                     }
                     if (size > position)
                     {
@@ -322,8 +322,9 @@ internal static class Program
         return lines;
     }
 
-    // Look back through the end of the log for the most recent zone line, so the presence is right immediately.
-    private static string? LastZoneIn(string path)
+    // Initialize the cursor, unfinished line and most recent complete zone from the same file snapshot.
+    // Keeping the unfinished bytes lets ReadNewLines finish a line that was already being written.
+    private static string? ReadLogTail(string path, ref long position, List<byte> carry)
     {
         using FileStream stream = OpenShared(path);
         long length = stream.Length;
@@ -338,9 +339,16 @@ internal static class Program
             total += count;
         }
 
+        position = start + total;
+        carry.Clear();
+        int lastNewline = total == 0 ? -1 : Array.LastIndexOf(bytes, (byte)'\n', total - 1, total);
+        for (int i = lastNewline + 1; i < total; i++)
+            carry.Add(bytes[i]);
+
         string[] lines = Encoding.UTF8.GetString(bytes, 0, total).Split('\n');
         int first = start > 0 ? 1 : 0; // when we started mid-file the first piece is half a line; skip it
-        for (int i = lines.Length - 1; i >= first; i--)
+        // The final piece is either unfinished or empty after a newline; never treat it as a zone.
+        for (int i = lines.Length - 2; i >= first; i--)
         {
             if (TryZone(lines[i].TrimEnd('\r'), out string zone))
                 return zone;

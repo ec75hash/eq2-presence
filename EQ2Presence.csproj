@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
     <!-- Pinned on purpose. NuGet also lists a broken, deprecated "1.143.0" that sorts as the newest version. -->
     <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
   </ItemGroup>

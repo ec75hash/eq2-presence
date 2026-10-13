@@ -38,6 +38,17 @@ dotnet run -- --no-discord                      # prints the presence instead of
 dotnet run -- --replay "C:\...\eq2log_Bob.txt"  # lists every zone change in an old log
 ```
 
+Run the automated log-reader regression checks (no game or Discord required):
+
+```
+dotnet run --project tests/EQ2Presence.RegressionTests.csproj -c Release
+```
+
+These checks launch the app against temporary logs and verify live zone updates,
+unfinished lines at startup (including split UTF-8 characters), and recovery after
+a log is truncated or replaced with shorter content. Only complete, newline-terminated zone messages
+are published; an unfinished line is retained until the game finishes writing it.
+
 ## Build a single exe
 
 ```
