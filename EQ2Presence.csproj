@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net8.0 + RollForward=Major builds and runs on any .NET SDK/runtime from 8 up. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>Major</RollForward>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>EQ2Presence</AssemblyName>
+    <RootNamespace>EQ2Presence</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pinned on purpose. NuGet also lists a broken, deprecated "1.143.0" that sorts as the newest version. -->
+    <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
+  </ItemGroup>
+
+</Project>
